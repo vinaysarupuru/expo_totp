@@ -1,8 +1,7 @@
-import React, { useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Alert, Platform } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { formatCode } from '../utils/otpUtils';
-import { generateHOTPCode } from '../utils/otpUtils';
+import { formatCode, generateHOTPCode } from '../utils/otpUtils';
 import colors from '../styles/colors';
 
 export default function AccountCard({ account, isEditing, deleteAccount, updateAccount, index }) {
@@ -24,6 +23,34 @@ export default function AccountCard({ account, isEditing, deleteAccount, updateA
       updateAccount(account.id, { counter: updatedCounter, code: updatedCode });
     }
     shakeAccount();
+  };
+
+  const handleDelete = () => {
+    console.log('Delete button pressed for account:', account.id);
+    
+    // Use a different approach for web platform
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Are you sure you want to delete "${account.issuer} - ${account.name}"?`)) {
+        deleteAccount(account.id);
+      }
+    } else {
+      // Use Alert for native platforms
+      Alert.alert(
+        "Delete Account",
+        `Are you sure you want to delete "${account.issuer} - ${account.name}"?`,
+        [
+          {
+            text: "Cancel",
+            style: "cancel"
+          },
+          { 
+            text: "Delete", 
+            onPress: () => deleteAccount(account.id),
+            style: "destructive"
+          }
+        ]
+      );
+    }
   };
 
   return (
@@ -48,7 +75,11 @@ export default function AccountCard({ account, isEditing, deleteAccount, updateA
         </View>
 
         {isEditing && (
-          <TouchableOpacity style={styles.deleteButton} onPress={() => deleteAccount(account.id)}>
+          <TouchableOpacity 
+            style={styles.deleteButton} 
+            onPress={handleDelete}
+            accessibilityLabel={`Delete ${account.name}`}
+          >
             <MaterialIcons name="delete" size={24} color={colors.danger} />
           </TouchableOpacity>
         )}
