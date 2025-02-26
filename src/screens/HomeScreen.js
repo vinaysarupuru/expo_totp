@@ -13,7 +13,7 @@ import AccountCard from '../components/AccountCard';
 import EmptyState from '../components/EmptyState';
 import AddAccountModal from '../components/AddAccountModal';
 import useOTPTimer from '../hooks/useOTPTimer';
-import { generateTOTPCode, generateHOTPCode } from '../utils/otpUtils';
+import * as otpUtils from '../utils/otpUtils';
 import colors from '../styles/colors';
 
 export default function HomeScreen() {
@@ -41,7 +41,7 @@ export default function HomeScreen() {
         secretKey: newSecretKey,
         type: newAccountType,
         counter: newAccountType === 'hotp' ? 0 : undefined,
-        code: newAccountType === 'totp' ? generateTOTPCode(newSecretKey) : generateHOTPCode(newSecretKey, 0),
+        code: newAccountType === 'totp' ? otpUtils.generateTOTPCode(newSecretKey) : otpUtils.generateHOTPCode(newSecretKey, 0),
       };
       setAccounts([...accounts, newAccount]);
       setNewAccountName('');
