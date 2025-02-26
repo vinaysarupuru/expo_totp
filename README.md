@@ -2,6 +2,15 @@
 
 A React Native application built with Expo for generating TOTP (Time-based One-Time Password) and HOTP (HMAC-based One-Time Password) authentication codes. This app provides a secure and convenient way to manage your two-factor authentication needs.
 
+## Features
+
+- Generate TOTP codes (time-based)
+- Generate HOTP codes (counter-based)
+- Dark mode support
+- Search functionality
+- Copy codes to clipboard
+- Secure local storage
+
 ## Setup Instructions
 
 ### Dependencies
@@ -93,3 +102,78 @@ Guidelines for contributing to this project:
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Testing
+
+This project uses Jest and React Native Testing Library for testing.
+
+### Test Dependencies
+
+The following testing libraries are used in this project:
+
+- **Jest** (`jest`): JavaScript testing framework
+- **React Native Testing Library** (`@testing-library/react-native`): Testing utilities for React Native
+- **React Hooks Testing Library** (`@testing-library/react-hooks`): Testing utilities for React hooks
+- **React Test Renderer** (`react-test-renderer`): React renderer for Jest
+- **Jest Expo** (`jest-expo`): Jest preset for Expo projects
+- **Babel Jest** (`babel-jest`): Babel transformer for Jest
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
+```
+
+### Test Structure
+
+- `src/tests/`: Contains all test files
+  - `components/`: Tests for React components (AccountCard, SearchBar)
+  - `hooks/`: Tests for custom hooks (useAccounts, useOTPTimer)
+  - `utils/`: Tests for utility functions (otpUtils)
+  - `context/`: Tests for React contexts (ThemeContext)
+  - `setup.js`: Jest setup file with mocks for React Native modules
+
+### Jest Configuration
+
+The Jest configuration in `package.json` includes:
+
+- Using `jest-expo` preset for Expo compatibility
+- Custom setup file for mocking React Native modules
+- Transformation patterns for handling JavaScript and TypeScript files
+- Coverage collection configuration
+
+## Development
+
+```bash
+# Start the app
+npm start
+
+# Start on iOS
+npm run ios
+
+# Start on Android
+npm run android
+
+# Start on web
+npm run web
+```
+
+## Project Structure
+
+- `src/components/`: React components
+- `src/context/`: React context providers
+- `src/hooks/`: Custom React hooks
+- `src/utils/`: Utility functions
+- `src/styles/`: Styling and theme definitions
+- `src/tests/`: Test files
+
+## License
+
+This project is licensed under the 0BSD License.

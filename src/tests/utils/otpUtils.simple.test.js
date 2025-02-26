@@ -1,6 +1,6 @@
 import { formatCode } from '../../utils/otpUtils';
 
-describe('OTP Utilities', () => {
+describe('OTP Utilities - Simple Tests', () => {
   describe('formatCode', () => {
     it('should format a 6-digit code with a space in the middle', () => {
       expect(formatCode('123456')).toBe('123 456');
@@ -14,4 +14,4 @@ describe('OTP Utilities', () => {
       expect(formatCode('123')).toBe('123 ');
     });
   });
-});
+}); 
