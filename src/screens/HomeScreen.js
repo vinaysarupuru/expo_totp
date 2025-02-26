@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from '../components/Header';
 import AccountCard from '../components/AccountCard';
 import EmptyState from '../components/EmptyState';
@@ -16,18 +17,61 @@ import useOTPTimer from '../hooks/useOTPTimer';
 import * as otpUtils from '../utils/otpUtils';
 import colors from '../styles/colors';
 
+const STORAGE_KEY = '@authenticator_accounts';
+
 export default function HomeScreen() {
-  const [accounts, setAccounts] = useState([
-    { id: '1', name: 'Google Account', code: '428913', issuer: 'Google', secretKey: 'JBSWY3DPEHPK3PXP', type: 'totp', counter: 0 },
-    { id: '2', name: 'Microsoft Account', code: '582671', issuer: 'Microsoft', secretKey: 'JBSWY3DPEHPK3PXQ', type: 'totp', counter: 0 },
-    { id: '3', name: 'GitHub Account', code: '395814', issuer: 'GitHub', secretKey: 'JBSWY3DPEHPK3PXR', type: 'totp', counter: 0 },
-  ]);
+  const [accounts, setAccounts] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newAccountName, setNewAccountName] = useState('');
   const [newAccountIssuer, setNewAccountIssuer] = useState('');
   const [newSecretKey, setNewSecretKey] = useState('');
   const [newAccountType, setNewAccountType] = useState('totp');
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load accounts from storage on initial render
+  useEffect(() => {
+    const loadAccounts = async () => {
+      try {
+        const storedAccounts = await AsyncStorage.getItem(STORAGE_KEY);
+        if (storedAccounts !== null) {
+          // Update codes for TOTP accounts before setting state
+          const parsedAccounts = JSON.parse(storedAccounts);
+          const updatedAccounts = parsedAccounts.map(acc => {
+            if (acc.type === 'totp') {
+              return {
+                ...acc,
+                code: otpUtils.generateTOTPCode(acc.secretKey)
+              };
+            }
+            return acc;
+          });
+          setAccounts(updatedAccounts);
+        }
+      } catch (error) {
+        console.error('Failed to load accounts from storage', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadAccounts();
+  }, []);
+
+  // Save accounts to storage whenever they change
+  useEffect(() => {
+    const saveAccounts = async () => {
+      try {
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
+      } catch (error) {
+        console.error('Failed to save accounts to storage', error);
+      }
+    };
+
+    if (!isLoading) {
+      saveAccounts();
+    }
+  }, [accounts, isLoading]);
 
   const { timeLeft, progressAnim } = useOTPTimer(accounts, setAccounts);
 
@@ -35,7 +79,7 @@ export default function HomeScreen() {
   const addAccount = () => {
     if (newAccountName.trim() && newAccountIssuer.trim() && newSecretKey.trim()) {
       const newAccount = {
-        id: (accounts.length + 1).toString(),
+        id: Date.now().toString(), // Use timestamp as unique ID
         name: newAccountName,
         issuer: newAccountIssuer,
         secretKey: newSecretKey,

@@ -10,6 +10,9 @@ Install the required dependencies for web support:
 # for web install these
 npx expo install react-dom react-native-web @expo/metro-runtime
 
+# for local storage
+npm install @react-native-async-storage/async-storage
+
 ### Getting Started
 
 1. Clone the repository
@@ -41,6 +44,7 @@ If you prefer a simpler approach, you can use the `test.js` file which contains 
 - Add, view, and delete accounts
 - Visual timer for TOTP code expiration
 - Shake animation when viewing codes
+- Local storage of accounts (persists between app restarts)
 
 ## Contributing
 
