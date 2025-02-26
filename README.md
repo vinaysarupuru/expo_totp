@@ -1,6 +1,6 @@
-# Expo Project
+# Expo Authenticator App
 
-A React Native application built with Expo.
+A React Native application built with Expo for generating TOTP and HOTP authentication codes.
 
 ## Setup Instructions
 
@@ -25,7 +25,22 @@ npx expo install react-dom react-native-web @expo/metro-runtime
 
 ## Project Structure
 
-Brief description of the project structure and key files.
+The project is organized into a modular structure for better maintainability:
+
+- `src/components/` - Reusable UI components
+- `src/hooks/` - Custom React hooks
+- `src/utils/` - Utility functions for OTP generation
+- `src/screens/` - Main application screens
+- `src/styles/` - Styling constants and themes
+
+If you prefer a simpler approach, you can use the `test.js` file which contains all the functionality in a single file.
+
+## Features
+
+- Generate time-based (TOTP) and counter-based (HOTP) authentication codes
+- Add, view, and delete accounts
+- Visual timer for TOTP code expiration
+- Shake animation when viewing codes
 
 ## Contributing
 

@@ -24,6 +24,7 @@ export default function AddAccountModal({
           <TextInput
             style={styles.input}
             placeholder="Google, Microsoft, GitHub, etc."
+            placeholderTextColor="#AAAAAA"
             value={newAccountIssuer}
             onChangeText={setNewAccountIssuer}
           />
@@ -31,6 +32,7 @@ export default function AddAccountModal({
           <TextInput
             style={styles.input}
             placeholder="username@example.com"
+            placeholderTextColor="#AAAAAA"
             value={newAccountName}
             onChangeText={setNewAccountName}
           />
@@ -38,6 +40,7 @@ export default function AddAccountModal({
           <TextInput
             style={styles.input}
             placeholder="JBSWY3DPEHPK3PXP"
+            placeholderTextColor="#AAAAAA"
             value={newSecretKey}
             onChangeText={setNewSecretKey}
           />
@@ -116,6 +119,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 20,
     backgroundColor: colors.inputBg,
+    color: colors.text.primary,
   },
   typeSelector: {
     flexDirection: 'row',
