@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
-import colors from '../styles/colors';
+import { useTheme } from '../context/ThemeContext';
 
 export default function ProgressBar({ timeLeft, progressAnim }) {
+  const { theme } = useTheme();
+  
   return (
     <View style={styles.timerContainer}>
       <Animated.View
@@ -15,7 +17,7 @@ export default function ProgressBar({ timeLeft, progressAnim }) {
             }),
             backgroundColor: progressAnim.interpolate({
               inputRange: [0, 0.3, 1],
-              outputRange: [colors.danger, colors.warning, colors.success],
+              outputRange: [theme.colors.danger, theme.colors.warning, theme.colors.success],
             }),
           },
         ]}

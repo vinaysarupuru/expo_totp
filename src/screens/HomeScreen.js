@@ -1,128 +1,97 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   StatusBar,
+  Text,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import Header from '../components/Header';
 import AccountCard from '../components/AccountCard';
 import EmptyState from '../components/EmptyState';
 import AddAccountModal from '../components/AddAccountModal';
+import HeaderBar from '../components/HeaderBar';
 import useOTPTimer from '../hooks/useOTPTimer';
-import * as otpUtils from '../utils/otpUtils';
-import colors from '../styles/colors';
-
-const STORAGE_KEY = '@authenticator_accounts';
+import useAccounts from '../hooks/useAccounts';
+import { useTheme } from '../context/ThemeContext';
 
 export default function HomeScreen() {
-  const [accounts, setAccounts] = useState([]);
+  const { theme, isDarkMode, toggleTheme } = useTheme();
   const [showAddModal, setShowAddModal] = useState(false);
   const [newAccountName, setNewAccountName] = useState('');
   const [newAccountIssuer, setNewAccountIssuer] = useState('');
   const [newSecretKey, setNewSecretKey] = useState('');
   const [newAccountType, setNewAccountType] = useState('totp');
   const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
+  
+  const {
+    accounts,
+    filteredAccounts,
+    searchQuery,
+    setSearchQuery,
+    addAccount,
+    deleteAccount,
+    updateAccount
+  } = useAccounts();
 
-  // Load accounts from storage on initial render
-  useEffect(() => {
-    const loadAccounts = async () => {
-      try {
-        const storedAccounts = await AsyncStorage.getItem(STORAGE_KEY);
-        if (storedAccounts !== null) {
-          // Update codes for TOTP accounts before setting state
-          const parsedAccounts = JSON.parse(storedAccounts);
-          const updatedAccounts = parsedAccounts.map(acc => {
-            if (acc.type === 'totp') {
-              return {
-                ...acc,
-                code: otpUtils.generateTOTPCode(acc.secretKey)
-              };
-            }
-            return acc;
-          });
-          setAccounts(updatedAccounts);
-        }
-      } catch (error) {
-        console.error('Failed to load accounts from storage', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const { timeLeft, progressAnim } = useOTPTimer(accounts, updateAccount);
 
-    loadAccounts();
-  }, []);
-
-  // Save accounts to storage whenever they change
-  useEffect(() => {
-    const saveAccounts = async () => {
-      try {
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
-      } catch (error) {
-        console.error('Failed to save accounts to storage', error);
-      }
-    };
-
-    if (!isLoading) {
-      saveAccounts();
+  // Toggle search mode
+  const toggleSearch = () => {
+    setIsSearching(!isSearching);
+    if (isSearching) {
+      setSearchQuery('');
     }
-  }, [accounts, isLoading]);
+  };
 
-  const { timeLeft, progressAnim } = useOTPTimer(accounts, setAccounts);
-
-  // Add a new account
-  const addAccount = () => {
-    if (newAccountName.trim() && newAccountIssuer.trim() && newSecretKey.trim()) {
-      const newAccount = {
-        id: Date.now().toString(), // Use timestamp as unique ID
-        name: newAccountName,
-        issuer: newAccountIssuer,
-        secretKey: newSecretKey,
-        type: newAccountType,
-        counter: newAccountType === 'hotp' ? 0 : undefined,
-        code: newAccountType === 'totp' ? otpUtils.generateTOTPCode(newSecretKey) : otpUtils.generateHOTPCode(newSecretKey, 0),
-      };
-      setAccounts([...accounts, newAccount]);
+  // Handle adding a new account
+  const handleAddAccount = () => {
+    if (addAccount(newAccountName, newAccountIssuer, newSecretKey, newAccountType)) {
       setNewAccountName('');
       setNewAccountIssuer('');
       setNewSecretKey('');
+      setNewAccountType("totp");
       setShowAddModal(false);
     }
   };
 
-  // Delete an account
-  const deleteAccount = (id) => {
-    setAccounts(accounts.filter((account) => account.id !== id));
-  };
-
-  // Update an account
-  const updateAccount = (id, updates) => {
-    setAccounts(
-      accounts.map((account) => (account.id === id ? { ...account, ...updates } : account))
-    );
-  };
-
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <StatusBar barStyle={theme.statusBar} />
 
-      <Header 
-        isEditing={isEditing} 
-        setIsEditing={setIsEditing} 
-        timeLeft={timeLeft} 
-        progressAnim={progressAnim} 
+      <HeaderBar
+        isEditing={isEditing}
+        setIsEditing={setIsEditing}
+        timeLeft={timeLeft}
+        progressAnim={progressAnim}
+        isSearching={isSearching}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        toggleSearch={toggleSearch}
+        toggleTheme={toggleTheme}
+        isDarkMode={isDarkMode}
       />
 
       <ScrollView style={styles.scrollView}>
-        {accounts.length === 0 ? (
-          <EmptyState />
+        {filteredAccounts.length === 0 ? (
+          searchQuery ? (
+            <View style={styles.emptyState}>
+              <MaterialIcons name="search-off" size={64} color={theme.colors.text.muted} />
+              <Text style={[styles.emptyStateText, { color: theme.colors.text.secondary }]}>
+                No matching accounts
+              </Text>
+              <Text style={[styles.emptyStateSubtext, { color: theme.colors.text.muted }]}>
+                Try a different search term
+              </Text>
+            </View>
+          ) : (
+            <EmptyState />
+          )
         ) : (
-          accounts.map((account, index) => (
+          filteredAccounts.map((account, index) => (
             <AccountCard
               key={account.id}
               account={account}
@@ -138,7 +107,7 @@ export default function HomeScreen() {
 
       <TouchableOpacity style={styles.addButton} onPress={() => setShowAddModal(true)}>
         <LinearGradient 
-          colors={[colors.primary, colors.secondary]} 
+          colors={[theme.colors.primary, theme.colors.secondary]} 
           style={styles.addButtonGradient}
         >
           <MaterialIcons name="add" size={24} color="white" />
@@ -148,7 +117,7 @@ export default function HomeScreen() {
       <AddAccountModal
         visible={showAddModal}
         onClose={() => setShowAddModal(false)}
-        onAdd={addAccount}
+        onAdd={handleAddAccount}
         newAccountName={newAccountName}
         setNewAccountName={setNewAccountName}
         newAccountIssuer={newAccountIssuer}
@@ -165,7 +134,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   scrollView: {
     flex: 1,
@@ -192,5 +160,21 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 80,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+    marginTop: 40,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 20,
+  },
+  emptyStateSubtext: {
+    fontSize: 15,
+    marginTop: 8,
+    textAlign: 'center',
   },
 }); 

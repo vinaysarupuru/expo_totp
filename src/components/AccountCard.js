@@ -1,11 +1,13 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Alert, Platform, Clipboard, ToastAndroid } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { formatCode, generateHOTPCode } from '../utils/otpUtils';
-import colors from '../styles/colors';
+import { useTheme } from '../context/ThemeContext';
 
 export default function AccountCard({ account, isEditing, deleteAccount, updateAccount, index }) {
+  const { theme } = useTheme();
   const shakingValue = useRef(new Animated.Value(0)).current;
+  const [copied, setCopied] = useState(false);
 
   const shakeAccount = () => {
     Animated.sequence([
@@ -53,25 +55,73 @@ export default function AccountCard({ account, isEditing, deleteAccount, updateA
     }
   };
 
+  const copyToClipboard = () => {
+    const code = account.code;
+    
+    // Handle clipboard differently based on platform
+    if (Platform.OS === 'web') {
+      navigator.clipboard.writeText(code).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    } else {
+      Clipboard.setString(code);
+      
+      // Show toast on Android
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Code copied to clipboard', ToastAndroid.SHORT);
+      }
+      
+      // For iOS and other platforms, use the copied state
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   return (
     <Animated.View
       style={[
         styles.accountCard,
         {
           transform: [{ translateX: shakingValue }],
+          backgroundColor: theme.colors.card,
         },
       ]}
     >
       <TouchableOpacity style={styles.accountCardInner} onPress={handlePress}>
         <View style={styles.accountInfo}>
           <View style={styles.accountHeader}>
-            <Text style={styles.issuerName}>{account.issuer}</Text>
-            <View style={[styles.typeTag, account.type === 'hotp' ? styles.hotpTag : styles.totpTag]}>
-              <Text style={styles.typeTagText}>{account.type === 'totp' ? 'TIME BASED' : 'COUNTER BASED'}</Text>
+            <Text style={[styles.issuerName, { color: theme.colors.primary }]}>
+              {account.issuer}
+            </Text>
+            <View style={[
+              styles.typeTag, 
+              account.type === 'hotp' ? styles.hotpTag : styles.totpTag
+            ]}>
+              <Text style={styles.typeTagText}>
+                {account.type === 'totp' ? 'TIME BASED' : 'COUNTER BASED'}
+              </Text>
             </View>
           </View>
-          <Text style={styles.accountName}>{account.name}</Text>
-          <Text style={styles.codeText}>{formatCode(account.code)}</Text>
+          <Text style={[styles.accountName, { color: theme.colors.text.secondary }]}>
+            {account.name}
+          </Text>
+          <View style={styles.codeContainer}>
+            <Text style={[styles.codeText, { color: theme.colors.text.primary }]}>
+              {formatCode(account.code)}
+            </Text>
+            <TouchableOpacity 
+              style={styles.copyButton} 
+              onPress={copyToClipboard}
+              accessibilityLabel={`Copy code for ${account.name}`}
+            >
+              <MaterialIcons 
+                name={copied ? "check" : "content-copy"} 
+                size={20} 
+                color={copied ? theme.colors.success : theme.colors.text.secondary} 
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {isEditing && (
@@ -80,7 +130,7 @@ export default function AccountCard({ account, isEditing, deleteAccount, updateA
             onPress={handleDelete}
             accessibilityLabel={`Delete ${account.name}`}
           >
-            <MaterialIcons name="delete" size={24} color={colors.danger} />
+            <MaterialIcons name="delete" size={24} color={theme.colors.danger} />
           </TouchableOpacity>
         )}
       </TouchableOpacity>
@@ -90,7 +140,6 @@ export default function AccountCard({ account, isEditing, deleteAccount, updateA
 
 const styles = StyleSheet.create({
   accountCard: {
-    backgroundColor: colors.card,
     borderRadius: 16,
     marginBottom: 12,
     shadowColor: '#000',
@@ -117,19 +166,24 @@ const styles = StyleSheet.create({
   issuerName: {
     fontSize: 15,
     fontWeight: '700',
-    color: colors.primary,
     marginBottom: 4,
   },
   accountName: {
     fontSize: 13,
-    color: colors.text.secondary,
     marginBottom: 8,
+  },
+  codeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   codeText: {
     fontSize: 24,
     fontWeight: 'bold',
     letterSpacing: 1,
-    color: colors.text.primary,
+  },
+  copyButton: {
+    marginLeft: 12,
+    padding: 6,
   },
   deleteButton: {
     padding: 10,

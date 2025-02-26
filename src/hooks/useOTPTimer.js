@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Animated } from 'react-native';
 import * as otpUtils from '../utils/otpUtils';
 
-export default function useOTPTimer(accounts, setAccounts) {
+export default function useOTPTimer(accounts, updateAccount) {
   const [timeLeft, setTimeLeft] = useState(30);
   const progressAnim = useRef(new Animated.Value(1)).current;
   
@@ -23,12 +23,18 @@ export default function useOTPTimer(accounts, setAccounts) {
     const timer = setInterval(() => {
       setTimeLeft((prevTime) => {
         if (prevTime <= 1) {
-          // Regenerate TOTP codes and reset timer
-          setAccounts((prevAccounts) =>
-            prevAccounts.map((acc) =>
-              acc.type === 'totp' ? { ...acc, code: otpUtils.generateTOTPCode(acc.secretKey) } : acc
-            )
-          );
+          console.log(prevTime);
+          // Regenerate TOTP codes when timer expires
+          const currentAccounts = accountsRef.current;
+          
+          currentAccounts.forEach(account => {
+
+          
+            if (account.type === 'totp') {
+              const newCode = otpUtils.generateTOTPCode(account.secretKey);
+              updateAccount(account.id, { code: newCode });
+            }
+          });
 
           // Reset progress bar animation
           progressAnim.setValue(1);
